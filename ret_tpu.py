@@ -49,12 +49,24 @@ Training on the entire COCO2017 dataset which has around 118k images takes a
 lot of time, hence we will be using a smaller subset of ~500 images for
 training in this example.
 """
-resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='snehal-vm-tpu')
-tf.config.experimental_connect_to_cluster(resolver)
+#resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='snehal-vm-tpu')
+#tf.config.experimental_connect_to_cluster(resolver)
 # This is the TPU initialization code that has to be at the beginning.
-tf.tpu.experimental.initialize_tpu_system(resolver)
+#tf.tpu.experimental.initialize_tpu_system(resolver)
 print("All devices: ", tf.config.list_logical_devices('TPU'))
-strategy = tf.distribute.TPUStrategy(resolver)
+
+try:
+    tpu = tf.distribute.cluster_resolver.TPUClusterResolver()  # TPU detection
+    print('Running on TPU ', tpu.cluster_spec().as_dict()['worker'])
+except ValueError:
+    raise BaseException('ERROR: Not connected to a TPU runtime; please see the previous cell in this notebook for instructions!')
+
+tf.config.experimental_connect_to_cluster(tpu)
+tf.tpu.experimental.initialize_tpu_system(tpu)
+tpu_strategy = tf.distribute.experimental.TPUStrategy(tpu)
+
+
+#strategy = tf.distribute.TPUStrategy(resolver)
 
 filename = os.path.join(os.getcwd(), "data.zip")
 
@@ -857,13 +869,15 @@ learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
 ## Initializing and compiling model
 """
 
-with strategy.scope():
+with tpu_strategy.scope():
     resnet50_backbone = get_backbone()
     loss_fn = RetinaNetLoss(num_classes)
     model = RetinaNet(num_classes, resnet50_backbone)
 
     optimizer = tf.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
     model.compile(loss=loss_fn, optimizer=optimizer)
+
+#exit(0)
 
 """
 ## Setting up callbacks
