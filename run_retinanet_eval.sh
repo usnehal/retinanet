@@ -16,7 +16,7 @@ case $HOSTNAME in
         export PYTHONPATH=/home/suphale/retinanet/tpu/models
         ;;
     (snehal-vm-tpu) 
-        print_red "We are in WSL"
+        print_red "We are in vm-tpu"
         print_green "Install dependencies"
         git config --global user.email "snehal.v.uphale@gmail.com"
         git config --global user.name "Snehal Uphale"
@@ -27,17 +27,19 @@ case $HOSTNAME in
         pip3 install --user -U absl-py
         #sudo pip3 install --user -r /usr/share/models/official/requirements.txt
         export STORAGE_BUCKET=gs://snehal_bucket
-        export PYTHONPATH="/home/suphale/retinanet/tpu/models:${PYTHONPATH}"
+        #export PYTHONPATH=/home/suphale/retinanet/tpu/models
+	#export PYTHONPATH="${PYTHONPATH}:/usr/share/models"
+	export PYTHONPATH="${PYTHONPATH}:/home/suphale/retinanet/models"
+	export PYTHONPATH="${PYTHONPATH}:/home/suphale/retinanet/tpu/models"
         ;;
     (*)   
         print_red "We are somewhere";;
 esac
 
-exit 0
 
 export DATA_DIR=${STORAGE_BUCKET}/coco
 export MODEL_DIR=${STORAGE_BUCKET}/retinanet-train
-export RESNET_CHECKPOINT=${STORAGE_BUCKET}/resnet/resnet50-checkpoint-2018-02-07
+export RESNET_CHECKPOINT=${STORAGE_BUCKET}/resnet50-checkpoint-2018-02-07
 export TRAIN_FILE_PATTERN=${DATA_DIR}/train-*
 export EVAL_FILE_PATTERN=${DATA_DIR}/val-*
 export VAL_JSON_FILE=${DATA_DIR}/instances_val2017.json
@@ -49,30 +51,30 @@ print_green "Start Training"
 export EVAL_SAMPLES=5000
 python3 ~/retinanet/models/official/vision/detection/main.py --strategy_type=tpu --tpu=${TPU_NAME} --model_dir=${MODEL_DIR} --checkpoint_path=${MODEL_DIR} --mode=eval_once --params_override="{ type: retinanet, eval: { val_json_file: ${VAL_JSON_FILE}, eval_file_pattern: ${EVAL_FILE_PATTERN}, eval_samples: ${EVAL_SAMPLES} } }"
 
-# print_green "Save model"
-# EXPORT_DIR=${STORAGE_BUCKET}/saved_model
-# CHECKPOINT_PATH=${MODEL_DIR}
-# PARAMS_OVERRIDE=""
-# BATCH_SIZE=1
-# INPUT_TYPE="image_bytes"
-# INPUT_NAME="input"
-# INPUT_IMAGE_SIZE="640,640"
+#print_green "Save model"
+#EXPORT_DIR=${STORAGE_BUCKET}/saved_model
+#CHECKPOINT_PATH=${MODEL_DIR}
+#PARAMS_OVERRIDE=""
+#BATCH_SIZE=1
+#INPUT_TYPE="image_bytes"
+#INPUT_NAME="input"
+#INPUT_IMAGE_SIZE="640,640"
 
-# python3 ~/retinanet/tpu/models/official/detection/export_saved_model.py \
-#   --export_dir="${EXPORT_DIR?}" \
-#   --checkpoint_path="${CHECKPOINT_PATH?}" \
-#   --params_override="${PARAMS_OVERRIDE?}" \
-#   --batch_size=${BATCH_SIZE?} \
-#   --input_type="${INPUT_TYPE?}" \
-#   --input_name="${INPUT_NAME?}" \
-#   --input_image_size="${INPUT_IMAGE_SIZE?}" \
+#python3 ~/retinanet/tpu/models/official/detection/export_saved_model.py \
+#  --export_dir="${EXPORT_DIR?}" \
+#  --checkpoint_path="${CHECKPOINT_PATH?}" \
+#  --params_override="${PARAMS_OVERRIDE?}" \
+#  --batch_size=${BATCH_SIZE?} \
+#  --input_type="${INPUT_TYPE?}" \
+#  --input_name="${INPUT_NAME?}" \
+#  --input_image_size="${INPUT_IMAGE_SIZE?}" \
 
 print_green "Inference"
 MODEL="retinanet"
 IMAGE_SIZE=640
 CHECKPOINT_PATH=${MODEL_DIR}
 PARAMS_OVERRIDE=""  # if any.
-LABEL_MAP_FILE="~/retinanet/tpu/models/official/detection/datasets/coco_label_map.csv"
+LABEL_MAP_FILE="/home/suphale/retinanet/tpu/models/official/detection/datasets/coco_label_map.csv"
 IMAGE_FILE_PATTERN=/home/suphale/retinanet/000000111117.jpg
 OUTPUT_HTML="./test.html"
 python3 ~/retinanet/tpu/models/official/detection/inference.py \
