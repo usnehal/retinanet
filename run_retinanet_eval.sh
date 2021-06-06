@@ -1,3 +1,6 @@
+set -e
+set -x
+
 print_red () {
   echo -e "\e[1;31m$1\e[0m"
 }
@@ -17,10 +20,10 @@ pip3 install --user -U gast
 pip3 install --user -U absl-py
 
 #sudo pip3 install --user -r /usr/share/models/official/requirements.txt
-#export STORAGE_BUCKET=gs://snehal_bucket
-export STORAGE_BUCKET=/home/suphale/snehal_bucket
-#export PYTHONPATH="${PYTHONPATH}:/home/suphale/retinanet/tpu/models"
-export PYTHONPATH=/home/suphale/retinanet/tpu/models
+export STORAGE_BUCKET=gs://snehal_bucket
+#export STORAGE_BUCKET=/home/suphale/snehal_bucket
+export PYTHONPATH="${PYTHONPATH}:/home/suphale/retinanet/tpu/models"
+#export PYTHONPATH=/home/suphale/retinanet/tpu/models
 export DATA_DIR=${STORAGE_BUCKET}/coco
 export MODEL_DIR=${STORAGE_BUCKET}/retinanet-train
 export RESNET_CHECKPOINT=${STORAGE_BUCKET}/resnet/resnet50-checkpoint-2018-02-07
