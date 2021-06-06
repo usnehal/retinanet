@@ -4,6 +4,8 @@ sudo apt-get install -y python3-tk
 pip3 install --user Cython matplotlib opencv-python-headless pyyaml Pillow
 pip3 install --user 'git+https://github.com/cocodataset/cocoapi#egg=pycocotools&subdirectory=PythonAPI'
 pip3 install --user -U gast
+pip3 install --user -U absl-py
+
 sudo pip3 install --user -r /usr/share/models/official/requirements.txt
 export STORAGE_BUCKET=gs://snehal_bucket
 export PYTHONPATH="${PYTHONPATH}:/home/suphale/retinanet/tpu/models"
@@ -17,5 +19,22 @@ export PYTHONPATH=/usr/share/models
 python3 ~/retinanet/models/official/vision/detection/main.py --strategy_type=tpu --tpu=${TPU_NAME} --model_dir=${MODEL_DIR} --mode="train" --params_override="{ 
 type: retinanet, train: { total_steps: 10, checkpoint: { path: ${RESNET_CHECKPOINT}, prefix: resnet50/ }, train_file_pattern: ${TRAIN_FILE_PATTERN} }, eval: { val_json_file: ${VAL_JSON_FILE}, eval_file_pattern: ${EVAL_FILE_PATTERN}, eval_samples: 5000 } }"
 export EVAL_SAMPLES=5000
-python3 ~/retinanet/models/official/vision/detection/main.py --strategy_type=tpu --tpu=${TPU_NAME} --model_dir=${MODEL_DIR} --checkpoint_path=${MODEL_DIR} --mode=eval_once --params_override="{ type: retinanet, eval: { val_json_file: ${VAL_JSON_FILE}, eval_file_pattern: ${EVAL_FILE_PATTERN}, eval_samples: ${EVAL_SAMPLES} } }"
+#python3 ~/retinanet/models/official/vision/detection/main.py --strategy_type=tpu --tpu=${TPU_NAME} --model_dir=${MODEL_DIR} --checkpoint_path=${MODEL_DIR} --mode=eval_once --params_override="{ type: retinanet, eval: { val_json_file: ${VAL_JSON_FILE}, eval_file_pattern: ${EVAL_FILE_PATTERN}, eval_samples: ${EVAL_SAMPLES} } }"
+
+EXPORT_DIR=${STORAGE_BUCKET}/saved_model
+CHECKPOINT_PATH=${MODEL_DIR}
+PARAMS_OVERRIDE=""
+BATCH_SIZE=1
+INPUT_TYPE="image_bytes"
+INPUT_NAME="input"
+INPUT_IMAGE_SIZE="640,640"
+python ~/tpu/models/official/detection/export_saved_model.py \
+  --export_dir="${EXPORT_DIR?}" \
+  --checkpoint_path="${CHECKPOINT_PATH?}" \
+  --params_override="${PARAMS_OVERRIDE?}" \
+  --batch_size=${BATCH_SIZE?} \
+  --input_type="${INPUT_TYPE?}" \
+  --input_name="${INPUT_NAME?}" \
+  --input_image_size="${INPUT_IMAGE_SIZE?}" \
+
 
