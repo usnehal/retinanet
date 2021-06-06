@@ -17,7 +17,7 @@ case $HOSTNAME in
 	    USE_TPU=off
         ;;
     (snehal-vm-tpu) 
-        print_red "We are in gcloud-tpu"
+        print_red "We are in vm-tpu"
         print_green "Install dependencies"
         git config --global user.email "snehal.v.uphale@gmail.com"
         git config --global user.name "Snehal Uphale"
@@ -75,23 +75,23 @@ else
 fi
 
 
-# print_green "Save model"
-# EXPORT_DIR=${STORAGE_BUCKET}/saved_model
-# CHECKPOINT_PATH=${MODEL_DIR}
-# PARAMS_OVERRIDE=""
-# BATCH_SIZE=1
-# INPUT_TYPE="image_bytes"
-# INPUT_NAME="input"
-# INPUT_IMAGE_SIZE="640,640"
+#print_green "Save model"
+#EXPORT_DIR=${STORAGE_BUCKET}/saved_model
+#CHECKPOINT_PATH=${MODEL_DIR}
+#PARAMS_OVERRIDE=""
+#BATCH_SIZE=1
+#INPUT_TYPE="image_bytes"
+#INPUT_NAME="input"
+#INPUT_IMAGE_SIZE="640,640"
 
-# python3 ~/retinanet/tpu/models/official/detection/export_saved_model.py \
-#   --export_dir="${EXPORT_DIR?}" \
-#   --checkpoint_path="${CHECKPOINT_PATH?}" \
-#   --params_override="${PARAMS_OVERRIDE?}" \
-#   --batch_size=${BATCH_SIZE?} \
-#   --input_type="${INPUT_TYPE?}" \
-#   --input_name="${INPUT_NAME?}" \
-#   --input_image_size="${INPUT_IMAGE_SIZE?}" \
+#python3 ~/retinanet/tpu/models/official/detection/export_saved_model.py \
+#  --export_dir="${EXPORT_DIR?}" \
+#  --checkpoint_path="${CHECKPOINT_PATH?}" \
+#  --params_override="${PARAMS_OVERRIDE?}" \
+#  --batch_size=${BATCH_SIZE?} \
+#  --input_type="${INPUT_TYPE?}" \
+#  --input_name="${INPUT_NAME?}" \
+#  --input_image_size="${INPUT_IMAGE_SIZE?}" \
 
 print_green "Inference"
 MODEL="retinanet"
