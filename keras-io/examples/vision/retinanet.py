@@ -40,6 +40,16 @@ import tensorflow_datasets as tfds
 
 #tf.compat.v1.disable_eager_execution()
 
+
+resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='snehal-vm-tpu')
+tf.config.experimental_connect_to_cluster(resolver)
+# This is the TPU initialization code that has to be at the beginning.
+tf.tpu.experimental.initialize_tpu_system(resolver)
+print("All devices: ", tf.config.list_logical_devices('TPU'))
+strategy = tf.distribute.TPUStrategy(resolver)
+
+#exit(0)
+
 """
 ## Downloading the COCO2017 dataset
 
@@ -47,6 +57,7 @@ Training on the entire COCO2017 dataset which has around 118k images takes a
 lot of time, hence we will be using a smaller subset of ~500 images for
 training in this example.
 """
+
 
 url = "https://github.com/srihari-humbarwadi/datasets/releases/download/v0.1.0/data.zip"
 filename = os.path.join(os.getcwd(), "data.zip")
@@ -872,12 +883,13 @@ learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
 ## Initializing and compiling model
 """
 
-resnet50_backbone = get_backbone()
-loss_fn = RetinaNetLoss(num_classes)
-model = RetinaNet(num_classes, resnet50_backbone)
+with strategy.scope():
+    resnet50_backbone = get_backbone()
+    loss_fn = RetinaNetLoss(num_classes)
+    model = RetinaNet(num_classes, resnet50_backbone)
 
-optimizer = tf.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
-model.compile(loss=loss_fn, optimizer=optimizer)
+    optimizer = tf.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
+    model.compile(loss=loss_fn, optimizer=optimizer)
 
 """
 ## Setting up callbacks
