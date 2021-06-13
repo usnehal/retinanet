@@ -38,8 +38,20 @@ from tensorflow import keras
 import matplotlib.pyplot as plt
 import tensorflow_datasets as tfds
 
+
+def print_red(skk): print("\033[91m{}\033[00m" .format(skk))
+def print_green(skk): print("\033[92m{}\033[00m".format(skk))
+def prYellow(skk): print("\033[93m{}\033[00m" .format(skk))
+def prLightPurple(skk): print("\033[94m{}\033[00m" .format(skk))
+def prPurple(skk): print("\033[95m{}\033[00m" .format(skk))
+def prCyan(skk): print("\033[96m{}\033[00m" .format(skk))
+def prLightGray(skk): print("\033[97m{}\033[00m" .format(skk))
+def prBlack(skk): print("\033[98m{}\033[00m" .format(skk))
+
+
 #tf.compat.v1.disable_eager_execution()
 
+print_green("TPU strategy")
 
 resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='snehal-vm-tpu')
 tf.config.experimental_connect_to_cluster(resolver)
@@ -58,7 +70,7 @@ lot of time, hence we will be using a smaller subset of ~500 images for
 training in this example.
 """
 
-
+print_green("Dataset download")
 url = "https://github.com/srihari-humbarwadi/datasets/releases/download/v0.1.0/data.zip"
 filename = os.path.join(os.getcwd(), "data.zip")
 keras.utils.get_file(filename, url)
@@ -67,6 +79,7 @@ keras.utils.get_file(filename, url)
 with zipfile.ZipFile("data.zip", "r") as z_fp:
     z_fp.extractall("./")
 
+#exit()
 
 """
 ## Implementing utility functions
@@ -866,29 +879,34 @@ class RetinaNetLoss(tf.losses.Loss):
 """
 ## Setting up training parameters
 """
-
-model_dir = "retinanet/"
-label_encoder = LabelEncoder()
-
-num_classes = 80
-batch_size = 2
-
-learning_rates = [2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
-learning_rate_boundaries = [125, 250, 500, 240000, 360000]
-learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
-    boundaries=learning_rate_boundaries, values=learning_rates
-)
-
-"""
-## Initializing and compiling model
-"""
-
+print_green("LabelEncoder")
 with strategy.scope():
+    model_dir = "retinanet/"
+
+    label_encoder = LabelEncoder()
+
+    print_green("Training parameters")
+    num_classes = 80
+    batch_size = 2
+
+    learning_rates = [2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
+    learning_rate_boundaries = [125, 250, 500, 240000, 360000]
+    learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
+        boundaries=learning_rate_boundaries, values=learning_rates
+    )
+
+    """
+    ## Initializing and compiling model
+    """
+    print_green("Get backbone")
     resnet50_backbone = get_backbone()
     loss_fn = RetinaNetLoss(num_classes)
+    print_green("Retinanet model")
     model = RetinaNet(num_classes, resnet50_backbone)
 
+    print_green("Optimizer SGD")
     optimizer = tf.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
+    print_green("model compile")
     model.compile(loss=loss_fn, optimizer=optimizer)
 
 """
@@ -911,9 +929,11 @@ callbacks_list = [
 
 #  set `data_dir=None` to load the complete dataset
 
+print_green("Load dataset")
 (train_dataset, val_dataset), dataset_info = tfds.load(
-    "coco/2017", split=["train", "validation"], with_info=True, data_dir="data"
+    "coco/2017", split=["train", "validation"], with_info=True, data_dir="gs://snehal_bucket"
 )
+print_green("Loaded dataset")
 
 """
 ## Setting up a `tf.data` pipeline
@@ -929,7 +949,7 @@ objects, we use `padded_batch` to the add the necessary padding to create
 rectangular tensors
 - Create targets for each sample in the batch using `LabelEncoder`
 """
-
+print_green("Setting up pipeline")
 autotune = tf.data.experimental.AUTOTUNE
 train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=autotune)
 train_dataset = train_dataset.shuffle(8 * batch_size)
@@ -966,7 +986,7 @@ epochs = 1
 
 # Running 100 training and 50 validation steps,
 # remove `.take` when training on the full dataset
-
+print_green("train dataset model.fit")
 model.fit(
     train_dataset.take(100),
     validation_data=val_dataset.take(50),
@@ -978,7 +998,7 @@ model.fit(
 """
 ## Loading weights
 """
-
+print_green("Load weights from checkpoint")
 # Change this to `model_dir` when not using the downloaded weights
 weights_dir = "data"
 
@@ -988,7 +1008,7 @@ model.load_weights(latest_checkpoint)
 """
 ## Building inference model
 """
-
+print_green("Build inference model")
 image = tf.keras.Input(shape=[None, None, 3], name="image")
 predictions = model(image, training=False)
 detections = DecodePredictions(confidence_threshold=0.5)(image, predictions)
@@ -1005,7 +1025,7 @@ def prepare_image(image):
     return tf.expand_dims(image, axis=0), ratio
 
 
-val_dataset = tfds.load("coco/2017", split="validation", data_dir="data")
+val_dataset = tfds.load("coco/2017", split="validation", data_dir="gs://snehal_bucket")
 int2str = dataset_info.features["objects"]["label"].int2str
 
 for sample in val_dataset.take(2):
