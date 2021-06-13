@@ -38,6 +38,7 @@ from tensorflow import keras
 import matplotlib.pyplot as plt
 import tensorflow_datasets as tfds
 
+#tf.compat.v1.disable_eager_execution()
 
 """
 ## Downloading the COCO2017 dataset
@@ -534,18 +535,25 @@ class LabelEncoder:
 
         i = tf.constant(0)
         while_condition = lambda i: tf.less(i, batch_size)
+        print("----------------------SNEHAL--------------")
         def body(i):
+            nonlocal labels
+            print("----------------------SNEHAL--------------")
             # do something here which you want to do in your loop
             # increment i
             label = self._encode_sample(images_shape, gt_boxes[i], cls_ids[i])
-            labels = labels.write(i, label)
+            # labels = labels.write(i, label)
+            labels.write(i, label)
+            return tf.add(i, 1)
 
+        print("----------------------SNEHAL--------------")
         # do the loop:
         r = tf.while_loop(while_condition, body, [i])
 
-        for i in range(batch_size):
-            label = self._encode_sample(images_shape, gt_boxes[i], cls_ids[i])
-            labels = labels.write(i, label)
+        print("--+++--------------SNEHAL--------------")
+        # for i in range(batch_size):
+        #     label = self._encode_sample(images_shape, gt_boxes[i], cls_ids[i])
+        #     labels = labels.write(i, label)
         batch_images = tf.keras.applications.resnet.preprocess_input(batch_images)
         return batch_images, labels.stack()
 
