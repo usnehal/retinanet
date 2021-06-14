@@ -56,9 +56,13 @@ host = socket.gethostname()
 print("host="+host)
 
 use_wsl = False
+use_nimblebox = False
 
 if(host == 'LTsuphale-NC2JM'):
     use_wsl = True
+if(host.contains('cuda') == True):
+    use_nimblebox = True
+    print('nimble')
 exit()
 
 print_green("TPU strategy")
