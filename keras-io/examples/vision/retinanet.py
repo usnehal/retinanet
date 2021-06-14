@@ -60,7 +60,7 @@ use_nimblebox = False
 
 if(host == 'LTsuphale-NC2JM'):
     use_wsl = True
-if(host.contains('cuda') == True):
+if('cuda' in host):
     use_nimblebox = True
     print('nimble')
 exit()
