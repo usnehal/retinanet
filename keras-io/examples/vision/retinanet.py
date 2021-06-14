@@ -50,6 +50,16 @@ def prBlack(skk): print("\033[98m{}\033[00m" .format(skk))
 
 
 #tf.compat.v1.disable_eager_execution()
+import socket
+host = socket.gethostname()
+
+print("host="+host)
+
+use_wsl = False
+
+if(host == 'LTsuphale-NC2JM'):
+    use_wsl = True
+exit()
 
 print_green("TPU strategy")
 
