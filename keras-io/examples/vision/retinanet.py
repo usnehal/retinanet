@@ -970,7 +970,7 @@ callbacks_list = [
 
 print_green("Load dataset")
 (train_dataset, val_dataset), dataset_info = tfds.load(
-    "coco/2017", split=["train", "validation"], with_info=True, data_dir="gs://snehal_bucket"
+    "coco/2017", split=["train", "validation"], with_info=True, data_dir="./data"
 )
 print_green("Loaded dataset")
 
