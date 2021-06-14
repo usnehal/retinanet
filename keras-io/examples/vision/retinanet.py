@@ -57,22 +57,23 @@ print("host="+host)
 
 use_wsl = False
 use_nimblebox = False
+use_tpu = False
 
 if(host == 'LTsuphale-NC2JM'):
     use_wsl = True
 if('cuda' in host):
     use_nimblebox = True
     print('nimble')
-exit()
 
-print_green("TPU strategy")
+if(use_tpu):
+    print_green("TPU strategy")
 
-resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='snehal-vm-tpu')
-tf.config.experimental_connect_to_cluster(resolver)
-# This is the TPU initialization code that has to be at the beginning.
-tf.tpu.experimental.initialize_tpu_system(resolver)
-print("All devices: ", tf.config.list_logical_devices('TPU'))
-strategy = tf.distribute.TPUStrategy(resolver)
+    resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='snehal-vm-tpu')
+    tf.config.experimental_connect_to_cluster(resolver)
+    # This is the TPU initialization code that has to be at the beginning.
+    tf.tpu.experimental.initialize_tpu_system(resolver)
+    print("All devices: ", tf.config.list_logical_devices('TPU'))
+    strategy = tf.distribute.TPUStrategy(resolver)
 
 #exit(0)
 
@@ -573,10 +574,8 @@ class LabelEncoder:
 
         i = tf.constant(0)
         while_condition = lambda i: tf.less(i, batch_size)
-        print("----------------------SNEHAL--------------")
         def body(i):
             nonlocal labels
-            print("----------------------SNEHAL--------------")
             # do something here which you want to do in your loop
             # increment i
             label = self._encode_sample(images_shape, gt_boxes[i], cls_ids[i])
@@ -584,11 +583,9 @@ class LabelEncoder:
             labels.write(i, label)
             return tf.add(i, 1)
 
-        print("----------------------SNEHAL--------------")
         # do the loop:
         r = tf.while_loop(while_condition, body, [i])
 
-        print("--+++--------------SNEHAL--------------")
         # for i in range(batch_size):
         #     label = self._encode_sample(images_shape, gt_boxes[i], cls_ids[i])
         #     labels = labels.write(i, label)
@@ -894,7 +891,36 @@ class RetinaNetLoss(tf.losses.Loss):
 ## Setting up training parameters
 """
 print_green("LabelEncoder")
-with strategy.scope():
+if(use_tpu):
+    with strategy.scope():
+        model_dir = "retinanet/"
+
+        label_encoder = LabelEncoder()
+
+        print_green("Training parameters")
+        num_classes = 80
+        batch_size = 2
+
+        learning_rates = [2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
+        learning_rate_boundaries = [125, 250, 500, 240000, 360000]
+        learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
+            boundaries=learning_rate_boundaries, values=learning_rates
+        )
+
+        """
+        ## Initializing and compiling model
+        """
+        print_green("Get backbone")
+        resnet50_backbone = get_backbone()
+        loss_fn = RetinaNetLoss(num_classes)
+        print_green("Retinanet model")
+        model = RetinaNet(num_classes, resnet50_backbone)
+
+        print_green("Optimizer SGD")
+        optimizer = tf.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
+        print_green("model compile")
+        model.compile(loss=loss_fn, optimizer=optimizer)
+else:
     model_dir = "retinanet/"
 
     label_encoder = LabelEncoder()
@@ -922,7 +948,6 @@ with strategy.scope():
     optimizer = tf.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
     print_green("model compile")
     model.compile(loss=loss_fn, optimizer=optimizer)
-
 """
 ## Setting up callbacks
 """
